@@ -4,7 +4,7 @@ from livekit import agents
 from livekit.agents import AgentSession, Agent, RoomInputOptions
 from livekit.plugins import noise_cancellation, silero
 from livekit.plugins.turn_detector.multilingual import MultilingualModel
-from livekit.plugins import sarvam, openai
+from livekit.plugins import sarvam, openai, google
 
 import os
 
@@ -46,15 +46,18 @@ async def entrypoint(ctx: agents.JobContext):
         #     model="sarvam-m",
         #     base_url="https://952c0285347b.ngrok-free.app/v1",
         # ),
-        llm=openai.LLM(   # properly instantiate using a supported plugin class
-            model="sarvam-m",
-            api_key=os.getenv("SARVAM_API_KEY", ''),
-            base_url="https://api.sarvam.ai/v1",
-            reasoning_effort=None
-        ),
+        # llm=openai.LLM(   # properly instantiate using a supported plugin class
+        #     model="sarvam-m",
+        #     api_key=os.getenv("SARVAM_API_KEY", ''),
+        #     base_url="https://api.sarvam.ai/v1",
+        #     reasoning_effort=None
+        # ),
         # llm = groq.LLM(
         #     model="openai/gpt-oss-20b"
         # ),
+        llm = google.LLM(
+            model="gemini-2.5-pro"
+        ),
         tts=sarvam.TTS(
             target_language_code="hi-IN",
             model="bulbul:v2",
