@@ -4,56 +4,44 @@ from livekit import agents
 from livekit.agents import AgentSession, Agent, RoomInputOptions
 from livekit.plugins import noise_cancellation, silero
 from livekit.plugins.turn_detector.multilingual import MultilingualModel
-from livekit.plugins import sarvam, openai
+from livekit.plugins import sarvam, groq
 
 import os
 
-# from tools import install_package
-# from tools import update_system
-# from tools import kill_process
-# from tools import system_info
-# from tools import check_memory
-# from tools import set_volume
-# from tools import open_application
-
 load_dotenv(".env.local")
+load_dotenv(".env")
 
 class Assistant(Agent):
-    def __init__(self) -> None:
+    def __init__(
+            self,
+            prompt: str|None = None
+    ) -> None:
+        instructions="""You are a helpful female voice AI assistant name Vidya who talks in Hindi. You eagerly assist users with their questions by providing information from your extensive knowledge.Your responses are concise, to the point, and without any complex formatting or punctuation including emojis, asterisks, or other symbols.You are curious, friendly, and have a sense of humor.""" if prompt is None or prompt.strip() == "" else prompt
         super().__init__(
-            instructions="""You are a helpful female voice AI assistant name Vidya who talks in Hindi.
-                You eagerly assist users with their questions by providing information from your extensive knowledge.
-                Your responses are concise, to the point, and without any complex formatting or punctuation including emojis, asterisks, or other symbols.
-                You are curious, friendly, and have a sense of humor.""",
-            # tools = [
-            #     install_package,
-            #     update_system,
-            #     system_info,
-            #     check_memory,
-            #     set_volume,
-            #     kill_process,
-            #     open_application
-            # ]
+            instructions=instructions,
         )
 
 async def entrypoint(ctx: agents.JobContext):
+    
+    with open("prompts/vidya.txt", "r", encoding="utf-8") as f:
+        prompt = f.read()
+
     session = AgentSession(
         stt=sarvam.STT(
             language="hi-IN",
             model="saarika:v2.5"
         ),
-        # llm = openai.LLM.with_ollama(
-        #     model="sarvam-m",
-        #     base_url="https://952c0285347b.ngrok-free.app/v1",
-        # ),
-        llm=openai.LLM(   # properly instantiate using a supported plugin class
-            model="sarvam-m",
-            api_key=os.getenv("SARVAM_API_KEY", ''),
-            base_url="https://api.sarvam.ai/v1",
-            reasoning_effort=None
+        llm = groq.LLM(
+            model="groq/compound-mini"
         ),
-        # llm = groq.LLM(
-        #     model="openai/gpt-oss-20b"
+        # llm=openai.LLM(   # properly instantiate using a supported plugin class
+        #     model="sarvam-m",
+        #     api_key=os.getenv("SARVAM_API_KEY", ''),
+        #     base_url="https://api.sarvam.ai/v1",
+        #     reasoning_effort=None
+        # ),
+        # llm = google.LLM(
+        #     model="gemini-2.5-pro"
         # ),
         tts=sarvam.TTS(
             target_language_code="hi-IN",
@@ -67,7 +55,7 @@ async def entrypoint(ctx: agents.JobContext):
 
     await session.start(
         room=ctx.room,
-        agent=Assistant(),
+        agent=Assistant(prompt=prompt),
         room_input_options=RoomInputOptions(
             # For telephony applications, use `BVCTelephony` instead for best results
             noise_cancellation=noise_cancellation.BVC(), 
@@ -75,7 +63,11 @@ async def entrypoint(ctx: agents.JobContext):
     )
 
     await session.generate_reply(
-        instructions="Greet the user and offer your assistance."
+        instructions=("Greet the user and offer your assistance."
+                      "You have been appointed by OMX Digital Marketing Agency as their AI assistant to help users with their queries related to digital marketing."
+                        "Keep your responses concise and to the point."
+                      ),
+        allow_interruptions=True,
     )
 
 
