@@ -4,6 +4,8 @@ from livekit import agents
 from livekit.agents import AgentSession, Agent, RoomInputOptions
 from livekit.plugins import noise_cancellation, silero
 from livekit.plugins.turn_detector.multilingual import MultilingualModel
+from livekit.plugins import cartesia
+# from livekit.plugins import openai
 from livekit.plugins import sarvam, groq
 
 import os
@@ -31,23 +33,12 @@ async def entrypoint(ctx: agents.JobContext):
             language="hi-IN",
             model="saarika:v2.5"
         ),
+        tts=cartesia.TTS(
+            model="sonic-3",
+            voice=os.getenv("CARTESIA_VOICE", "hi-IN-Wavenet-A"),
+        ),
         llm = groq.LLM(
             model="groq/compound-mini"
-        ),
-        # llm=openai.LLM(   # properly instantiate using a supported plugin class
-        #     model="sarvam-m",
-        #     api_key=os.getenv("SARVAM_API_KEY", ''),
-        #     base_url="https://api.sarvam.ai/v1",
-        #     reasoning_effort=None
-        # ),
-        # llm = google.LLM(
-        #     model="gemini-2.5-pro"
-        # ),
-        tts=sarvam.TTS(
-            target_language_code="hi-IN",
-            model="bulbul:v2",
-            speaker="vidya",
-            enable_preprocessing=True
         ),
         vad=silero.VAD.load(),
         turn_detection=MultilingualModel(),
@@ -63,9 +54,11 @@ async def entrypoint(ctx: agents.JobContext):
     )
 
     await session.generate_reply(
-        instructions=("Greet the user and offer your assistance."
+        instructions=("<|system|> SYSTEM INSTRUCTION:"
+            "Greet the user and offer your assistance."
                       "You have been appointed by OMX Digital Marketing Agency as their AI assistant to help users with their queries related to digital marketing."
                         "Keep your responses concise and to the point."
+            "<|endofsystem|>"
                       ),
         allow_interruptions=True,
     )
