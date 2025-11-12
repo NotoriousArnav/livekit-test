@@ -62,7 +62,7 @@ async def entrypoint(ctx: agents.JobContext):
             model="sonic-3",
             voice=os.getenv("CARTESIA_VOICE", "hi-IN-Wavenet-A"),
         ),
-        llm=groq.LLM(model="groq/compound-mini"),
+        llm=groq.LLM(model="llama-3.3-70b-versatile"),
         vad=silero.VAD.load(),
         turn_detection=MultilingualModel(),
     )
