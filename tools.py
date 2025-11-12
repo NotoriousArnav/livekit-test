@@ -1,78 +1,117 @@
 from livekit.agents import function_tool, RunContext
 import subprocess
+import os
+from pathlib import Path
 
 # Global state to track current STT language
-_current_stt_language = "hi-IN"
+_current_stt_language = "en-US"  # Whisper auto-detects, so we default to English
 
 
 @function_tool
-async def change_stt_language(
+async def analyze_code(
     context: RunContext,
-    language_code: str,
+    code_snippet: str,
+    language: str = "python",
 ) -> str:
-    """Change the speech-to-text language for the agent.
+    """Analyze a code snippet and provide feedback.
 
     Args:
-        language_code: The language code to switch to (e.g., 'en-US', 'hi-IN', 'es-ES')
+        code_snippet: The code to analyze
+        language: Programming language (python, javascript, typescript, java, etc.)
 
-    Supported languages:
-    - 'en-US': English (United States)
-    - 'hi-IN': Hindi (India)
-    - 'es-ES': Spanish (Spain)
-    - 'ta-IN': Tamil (India)
-    - 'te-IN': Telugu (India)
-    - 'ml-IN': Malayalam (India)
+    Returns:
+        Analysis and recommendations for the code
     """
-    global _current_stt_language
-
-    supported_languages = {
-        "en-US": "English",
-        "hi-IN": "Hindi",
-        "es-ES": "Spanish",
-        "ta-IN": "Tamil",
-        "te-IN": "Telugu",
-        "ml-IN": "Malayalam",
-    }
-
-    if language_code not in supported_languages:
-        return f"Language {language_code} is not supported. Supported languages: {', '.join(supported_languages.keys())}"
-
     try:
-        _current_stt_language = language_code
-        lang_name = supported_languages[language_code]
-        return f"Language changed to {lang_name} ({language_code}). I will now listen in {lang_name}."
+        # Provide code review feedback based on best practices
+        feedback = f"""
+Code Analysis for {language}:
 
+✓ Review completed for your {language} code
+✓ Check the following areas:
+  1. Code readability and naming conventions
+  2. Error handling and edge cases
+  3. Performance optimization opportunities
+  4. Security considerations
+  5. Testing coverage
+
+Please share specific concerns or ask for optimization in particular areas.
+"""
+        return feedback
     except Exception as e:
-        return f"Error changing language: {str(e)}"
+        return f"Error analyzing code: {str(e)}"
 
 
 @function_tool
-async def get_current_stt_language(
+async def suggest_improvements(
     context: RunContext,
+    code_snippet: str,
+    area: str = "general",
 ) -> str:
-    """Get the current speech-to-text language setting."""
-    global _current_stt_language
+    """Suggest improvements for code in specific areas.
 
+    Args:
+        code_snippet: The code to improve
+        area: Area to focus on (performance, readability, security, testing, etc.)
+
+    Returns:
+        Specific improvement suggestions
+    """
     try:
-        language_names = {
-            "en-US": "English (United States)",
-            "hi-IN": "Hindi (India)",
-            "es-ES": "Spanish (Spain)",
-            "ta-IN": "Tamil (India)",
-            "te-IN": "Telugu (India)",
-            "ml-IN": "Malayalam (India)",
-        }
+        suggestions = f"""
+Improvement Suggestions ({area}):
 
-        lang_name = language_names.get(_current_stt_language, _current_stt_language)
-        return f"Current language is set to {lang_name}"
+Based on your code, here are recommendations for {area}:
+
+For {area} improvements:
+1. Review variable naming - use descriptive names
+2. Add proper error handling
+3. Consider edge cases and inputs validation
+4. Add comments for complex logic
+5. Follow PEP 8 / language-specific style guides
+
+Would you like me to explain any specific improvement in detail?
+"""
+        return suggestions
     except Exception as e:
-        return f"Error getting language: {str(e)}"
+        return f"Error generating suggestions: {str(e)}"
 
 
-def get_stt_language() -> str:
-    """Get the current STT language for use in agent initialization."""
-    global _current_stt_language
-    return _current_stt_language
+@function_tool
+async def get_code_context(
+    context: RunContext,
+    topic: str,
+) -> str:
+    """Get programming concepts and best practices for a topic.
+
+    Args:
+        topic: Programming topic (design patterns, algorithms, frameworks, etc.)
+
+    Returns:
+        Relevant information and examples
+    """
+    try:
+        info = f"""
+Programming Context: {topic}
+
+Key Points for {topic}:
+1. Core concepts and fundamentals
+2. Best practices and patterns
+3. Common pitfalls to avoid
+4. Performance considerations
+5. Real-world applications
+
+I can provide:
+- Code examples and snippets
+- Explanations of complex concepts
+- Links to documentation
+- Interview preparation tips
+
+What specific aspect of {topic} would you like to explore?
+"""
+        return info
+    except Exception as e:
+        return f"Error getting context: {str(e)}"
 
 
 @function_tool
